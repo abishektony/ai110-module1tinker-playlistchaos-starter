@@ -7,7 +7,6 @@ from playlist_logic import (
     compute_playlist_stats,
     history_summary,
     lucky_pick,
-    merge_playlists,
     normalize_song,
     search_songs,
 )
@@ -196,24 +195,27 @@ def profile_sidebar():
 
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        profile["hype_min_energy"] = st.sidebar.slider(
+        profile["hype_min_energy"] = st.slider(
             "Hype min energy",
             min_value=1,
             max_value=10,
             value=int(profile.get("hype_min_energy", 7)),
         )
     with col2:
-        profile["chill_max_energy"] = st.sidebar.slider(
+        profile["chill_max_energy"] = st.slider(
             "Chill max energy",
             min_value=1,
             max_value=10,
             value=int(profile.get("chill_max_energy", 3)),
         )
 
+    genre_options = ["rock", "lofi", "pop", "jazz", "electronic", "ambient", "other"]
+    current_genre = profile.get("favorite_genre", "rock")
+    genre_index = genre_options.index(current_genre) if current_genre in genre_options else 0
     profile["favorite_genre"] = st.sidebar.selectbox(
         "Favorite genre",
-        options=["rock", "lofi", "pop", "jazz", "electronic", "ambient", "other"],
-        index=0,
+        options=genre_options,
+        index=genre_index,
     )
 
     profile["include_mixed"] = st.sidebar.checkbox(
@@ -253,6 +255,8 @@ def add_song_sidebar():
             all_songs = st.session_state.songs[:]
             all_songs.append(normalized)
             st.session_state.songs = all_songs
+        else:
+            st.sidebar.warning("Title and artist are required.")
 
 
 def playlist_tabs(playlists):
@@ -391,14 +395,13 @@ def main():
     profile = st.session_state.profile
     songs = st.session_state.songs
 
-    base_playlists = build_playlists(songs, profile)
-    merged_playlists = merge_playlists(base_playlists, {})
+    playlists = build_playlists(songs, profile)
 
-    playlist_tabs(merged_playlists)
+    playlist_tabs(playlists)
     st.divider()
-    lucky_section(merged_playlists)
+    lucky_section(playlists)
     st.divider()
-    stats_section(merged_playlists)
+    stats_section(playlists)
     st.divider()
     history_section()
 
